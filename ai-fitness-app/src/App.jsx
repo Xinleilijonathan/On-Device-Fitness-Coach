@@ -11,6 +11,7 @@ import WelcomePage from "./pages/WelcomePage";
 import ActionListPage from "./pages/ActionListPage";
 import InfoPage from "./pages/InfoPage";
 import CameraPage from "./pages/CameraPage";
+import CompletionPage from "./pages/CompletionPage";
 import { AppProvider } from "./context/AppContext";
 
 // Create a custom theme
@@ -75,6 +76,7 @@ function App() {
             <Route path="/actionlist" element={<ActionListPage />} />
             <Route path="/pose/:id" element={<InfoPage />} />
             <Route path="/camera/:id" element={<CameraPage />} />
+            <Route path="/completion/:id" element={<CompletionPage />} />
             {/* Other unknown paths redirect to the welcome page */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

@@ -1,151 +1,145 @@
 import React, { useEffect, useRef } from 'react';
-import { Box } from '@mui/material';
 import { useAppContext } from '../../context/AppContext';
+import apiService from '../../services/api';
 import { useSpring, animated } from '@react-spring/web';
 
-// Define the skeleton connections for pose visualization
+// Define pose connections for visualization
 const POSE_CONNECTIONS = [
-  ['nose', 'left_eye'], ['nose', 'right_eye'],
-  ['left_eye', 'left_ear'], ['right_eye', 'right_ear'],
-  ['nose', 'left_shoulder'], ['nose', 'right_shoulder'],
+  // Face
+  ['nose', 'left_eye'],
+  ['nose', 'right_eye'],
+  ['left_eye', 'left_ear'],
+  ['right_eye', 'right_ear'],
+  // Upper body
   ['left_shoulder', 'right_shoulder'],
-  ['left_shoulder', 'left_elbow'], ['right_shoulder', 'right_elbow'],
-  ['left_elbow', 'left_wrist'], ['right_elbow', 'right_wrist'],
-  ['left_shoulder', 'left_hip'], ['right_shoulder', 'right_hip'],
+  ['left_shoulder', 'left_elbow'],
+  ['right_shoulder', 'right_elbow'],
+  ['left_elbow', 'left_wrist'],
+  ['right_elbow', 'right_wrist'],
+  // Torso
+  ['left_shoulder', 'left_hip'],
+  ['right_shoulder', 'right_hip'],
   ['left_hip', 'right_hip'],
-  ['left_hip', 'left_knee'], ['right_hip', 'right_knee'],
-  ['left_knee', 'left_ankle'], ['right_knee', 'right_ankle']
+  // Lower body
+  ['left_hip', 'left_knee'],
+  ['right_hip', 'right_knee'],
+  ['left_knee', 'left_ankle'],
+  ['right_knee', 'right_ankle']
 ];
 
-// Joint pairs for angle calculation
-const ANGLE_JOINTS = {
-  'knee-joint-left': ['left_hip', 'left_knee', 'left_ankle'],
-  'knee-joint-right': ['right_hip', 'right_knee', 'right_ankle'],
-  'hip-joint-left': ['left_shoulder', 'left_hip', 'left_knee'],
-  'hip-joint-right': ['right_shoulder', 'right_hip', 'right_knee'],
-  'elbow-joint-left': ['left_shoulder', 'left_elbow', 'left_wrist'],
-  'elbow-joint-right': ['right_shoulder', 'right_elbow', 'right_wrist'],
-  'shoulder-joint-left': ['left_hip', 'left_shoulder', 'left_elbow'],
-  'shoulder-joint-right': ['right_hip', 'right_shoulder', 'right_elbow']
-};
-
-const PoseDetection = ({ isProjectorOn }) => {
-  const { keypoints, angles, currentPose } = useAppContext();
+const PoseDetection = () => {
+  const { 
+    isCameraOn,
+    currentPose,
+    updatePoseData
+  } = useAppContext();
+  
   const svgRef = useRef(null);
+  const frameRef = useRef(null);
   
   const svgSpring = useSpring({
-    opacity: isProjectorOn && keypoints.length > 0 ? 1 : 0,
+    opacity: 1, // Always show the visualization
     config: { tension: 280, friction: 20 }
   });
-  
-  // Calculate angle between three points (in degrees)
-  const calculateAngle = (pointA, pointB, pointC) => {
-    const AB = Math.sqrt(Math.pow(pointB.x - pointA.x, 2) + Math.pow(pointB.y - pointA.y, 2));
-    const BC = Math.sqrt(Math.pow(pointB.x - pointC.x, 2) + Math.pow(pointB.y - pointC.y, 2));
-    const AC = Math.sqrt(Math.pow(pointC.x - pointA.x, 2) + Math.pow(pointC.y - pointA.y, 2));
+
+  // Process video frame and detect pose
+  const processFrame = async (videoElement, canvasElement) => {
+    if (!videoElement || !canvasElement) return;
+
+    const ctx = canvasElement.getContext('2d');
+    ctx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
     
-    // Law of cosines
-    const angleRadians = Math.acos((Math.pow(AB, 2) + Math.pow(BC, 2) - Math.pow(AC, 2)) / (2 * AB * BC));
-    return Math.round((angleRadians * 180) / Math.PI);
-  };
-  
-  // Find a keypoint by name
-  const findKeypoint = (name) => {
-    return keypoints.find(kp => kp.id === name);
+    try {
+      // For testing: Use mock data
+      const poseData = apiService.mockDetectPose();
+      updatePoseData(poseData);
+      
+      // When ready for production, uncomment this:
+      // const imageData = canvasElement.toDataURL('image/jpeg', 0.8);
+      // const poseData = await apiService.detectPose(imageData);
+      // updatePoseData(poseData);
+    } catch (error) {
+      console.error('Error processing frame:', error);
+    }
   };
 
-  // Render the pose detection visualization
+  // Set up continuous frame processing
   useEffect(() => {
-    if (!svgRef.current || keypoints.length === 0 || !isProjectorOn) {
-      return;
+    const runPoseDetection = () => {
+      const videoElement = document.querySelector('video');
+      const canvasElement = document.querySelector('canvas');
+      
+      if (videoElement && canvasElement) {
+        processFrame(videoElement, canvasElement);
+      }
+      
+      frameRef.current = requestAnimationFrame(runPoseDetection);
+    };
+
+    // Start with mock data immediately
+    const mockData = apiService.mockDetectPose();
+    updatePoseData(mockData);
+
+    if (isCameraOn) {
+      frameRef.current = requestAnimationFrame(runPoseDetection);
     }
-    
+
+    return () => {
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current);
+      }
+    };
+  }, [isCameraOn]);
+
+  // Render pose visualization
+  useEffect(() => {
+    if (!svgRef.current) return;
+
     const svg = svgRef.current;
-    const svgWidth = svg.clientWidth;
-    const svgHeight = svg.clientHeight;
-    
-    // Clear previous elements
+    const poseData = currentPose?.poseData || apiService.mockDetectPose();
+
+    if (!poseData?.keypoints) return;
+
+    // Clear previous drawings
     while (svg.firstChild) {
       svg.removeChild(svg.firstChild);
     }
-    
-    // Draw connections (skeleton)
-    POSE_CONNECTIONS.forEach(([startId, endId]) => {
-      const startPoint = findKeypoint(startId);
-      const endPoint = findKeypoint(endId);
-      
+
+    const svgWidth = svg.clientWidth;
+    const svgHeight = svg.clientHeight;
+
+    // Draw connections
+    POSE_CONNECTIONS.forEach(([start, end]) => {
+      const startPoint = poseData.keypoints.find(kp => kp.id === start);
+      const endPoint = poseData.keypoints.find(kp => kp.id === end);
+
       if (startPoint && endPoint) {
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', startPoint.x * svgWidth);
         line.setAttribute('y1', startPoint.y * svgHeight);
         line.setAttribute('x2', endPoint.x * svgWidth);
         line.setAttribute('y2', endPoint.y * svgHeight);
-        line.setAttribute('stroke', 'white');
+        line.setAttribute('stroke', '#3B82F6');
         line.setAttribute('stroke-width', '2');
         svg.appendChild(line);
       }
     });
-    
+
     // Draw keypoints
-    keypoints.forEach(keypoint => {
+    poseData.keypoints.forEach(point => {
       const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      circle.setAttribute('cx', keypoint.x * svgWidth);
-      circle.setAttribute('cy', keypoint.y * svgHeight);
+      circle.setAttribute('cx', point.x * svgWidth);
+      circle.setAttribute('cy', point.y * svgHeight);
       circle.setAttribute('r', '4');
-      circle.setAttribute('fill', '#3B82F6'); // Primary color
+      circle.setAttribute('fill', '#3B82F6');
       circle.setAttribute('stroke', 'white');
       circle.setAttribute('stroke-width', '2');
       svg.appendChild(circle);
     });
-    
-    // Draw angles for key joints
-    Object.entries(ANGLE_JOINTS).forEach(([jointName, [pointAId, pointBId, pointCId]]) => {
-      const pointA = findKeypoint(pointAId);
-      const pointB = findKeypoint(pointBId);
-      const pointC = findKeypoint(pointCId);
-      
-      if (pointA && pointB && pointC) {
-        // Calculate angle
-        const angle = calculateAngle(pointA, pointB, pointC);
-        
-        // Draw angle text
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', pointB.x * svgWidth);
-        text.setAttribute('y', pointB.y * svgHeight - 10);
-        text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('fill', 'white');
-        text.setAttribute('font-size', '12px');
-        text.setAttribute('font-weight', 'bold');
-        text.setAttribute('stroke', 'black');
-        text.setAttribute('stroke-width', '0.5px');
-        text.setAttribute('paint-order', 'stroke');
-        text.textContent = `${angle}°`;
-        
-        // Determine if angle is within acceptable range
-        const isCorrect = currentPose?.evaluation?.standardAngles?.[jointName.split('-left')[0].split('-right')[0]];
-        if (isCorrect) {
-          const targetAngle = currentPose.evaluation.standardAngles[jointName.split('-left')[0].split('-right')[0]];
-          const tolerance = 15; // Degrees of tolerance
-          
-          if (Math.abs(angle - targetAngle) <= tolerance) {
-            text.setAttribute('fill', '#10B981'); // Green for correct
-          } else {
-            text.setAttribute('fill', '#EF4444'); // Red for incorrect
-          }
-        }
-        
-        svg.appendChild(text);
-      }
-    });
-    
-  }, [keypoints, currentPose, isProjectorOn]);
-  
-  if (!isProjectorOn || keypoints.length === 0) {
-    return null;
-  }
+  }, [currentPose]);
 
   return (
-    <animated.svg 
+    <animated.svg
       ref={svgRef}
       style={{
         ...svgSpring,

@@ -1,16 +1,20 @@
 import React, { useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 import usePoseDetection from '../../hooks/usePoseDetection';
 import PoseDetection from './PoseDetection';
 import FeedbackDisplay from './FeedbackDisplay';
 import { Box, Card, CardContent, Typography, Stack, Alert, AlertTitle } from '@mui/material';
-import { Videocam, VideocamOff, Cast, CastConnected, Visibility } from '@mui/icons-material';
+import { Videocam, VideocamOff, Cast, CastConnected, Visibility, CheckCircle } from '@mui/icons-material';
 import Button from '../common/Button';
 import { useSpring, animated } from '@react-spring/web';
+import apiService from '../../services/api';
 
 const AnimatedCard = animated(Card);
 
 const Camera = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
   const { 
     isCameraOn, 
     isProjectorOn, 
@@ -40,6 +44,26 @@ const Camera = () => {
       }
     };
   }, []);
+
+  // Handle projector toggle
+  const handleProjectorToggle = async () => {
+    try {
+      // Call the API to control the external projector
+      await apiService.toggleProjector(!isProjectorOn);
+      // Update the UI state
+      toggleProjector();
+    } catch (error) {
+      console.error('Error toggling projector:', error);
+      // You might want to show an error message to the user here
+    }
+  };
+
+  const handleCompleteExercise = () => {
+    if (isCameraOn) {
+      toggleCamera();
+    }
+    navigate(`/completion/${id}`);
+  };
   
   return (
     <Box py={3} sx={{ width: '100%' }}>
@@ -47,16 +71,16 @@ const Camera = () => {
         <CardContent sx={{ p: 2, bgcolor: 'grey.100' }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems="center">
             <Button
-              onClick={toggleCamera}
-              variant={isCameraOn ? 'danger' : 'primary'}
-              icon={isCameraOn ? <VideocamOff /> : <Videocam />}
+              onClick={handleCompleteExercise}
+              variant="primary"
+              icon={<CheckCircle />}
+              sx={{ bgcolor: 'success.main', '&:hover': { bgcolor: 'success.dark' } }}
             >
-              {isCameraOn ? 'Turn Off Camera' : 'Turn On Camera'}
+              Complete Exercise
             </Button>
             
             <Button
-              onClick={toggleProjector}
-              disabled={!isCameraOn}
+              onClick={handleProjectorToggle}
               variant={isProjectorOn ? 'secondary' : 'outline'}
               icon={isProjectorOn ? <CastConnected /> : <Cast />}
             >
