@@ -1,38 +1,44 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import ActionListPage from './pages/ActionListPage';
-import InfoPage from './pages/InfoPage';
-import CameraPage from './pages/CameraPage';
-import { AppProvider } from './context/AppContext';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+import WelcomePage from "./pages/WelcomePage";
+import ActionListPage from "./pages/ActionListPage";
+import InfoPage from "./pages/InfoPage";
+import CameraPage from "./pages/CameraPage";
+import { AppProvider } from "./context/AppContext";
 
 // Create a custom theme
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#3B82F6',
+      main: "#000000",
     },
     secondary: {
-      main: '#10B981',
+      main: "#10B981",
     },
     error: {
-      main: '#EF4444',
+      main: "#EF4444",
     },
     background: {
-      default: '#F3F4F6',
+      default: "#F3F4F6",
     },
   },
   typography: {
     fontFamily: [
-      '-apple-system',
-      'BlinkMacSystemFont',
+      "-apple-system",
+      "BlinkMacSystemFont",
       '"Segoe UI"',
-      'Roboto',
+      "Roboto",
       '"Helvetica Neue"',
-      'Arial',
-      'sans-serif',
-    ].join(','),
+      "Arial",
+      "sans-serif",
+    ].join(","),
   },
   components: {
     MuiButton: {
@@ -41,7 +47,7 @@ const theme = createTheme({
       },
       styleOverrides: {
         root: {
-          textTransform: 'none',
+          textTransform: "none",
           borderRadius: 8,
         },
       },
@@ -50,7 +56,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 12,
-          overflow: 'hidden',
+          overflow: "hidden",
         },
       },
     },
@@ -64,9 +70,12 @@ function App() {
       <AppProvider>
         <Router>
           <Routes>
-            <Route path="/" element={<ActionListPage />} />
+            {/* The root path always displays the welcome page */}
+            <Route path="/" element={<WelcomePage />} />
+            <Route path="/actionlist" element={<ActionListPage />} />
             <Route path="/pose/:id" element={<InfoPage />} />
             <Route path="/camera/:id" element={<CameraPage />} />
+            {/* Other unknown paths redirect to the welcome page */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>

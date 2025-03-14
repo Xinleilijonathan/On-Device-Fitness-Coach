@@ -1,55 +1,129 @@
-import { useLocation, Link } from 'react-router-dom';
-import { useAppContext } from '../../context/AppContext';
-import { AppBar, Toolbar, Typography, IconButton, Box, Container } from '@mui/material';
-import { ArrowBack, Home } from '@mui/icons-material';
+import { useLocation, Link } from "react-router-dom";
+import { useAppContext } from "../../context/AppContext";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  IconButton,
+  Box,
+  Container,
+} from "@mui/material";
+import { ArrowBack, Home } from "@mui/icons-material";
 
 const Header = () => {
   const location = useLocation();
   const { currentPose } = useAppContext();
-  
-  // Determine the header title based on the current route
+
+  // get header
   const getHeaderTitle = () => {
-    if (location.pathname === '/') {
-      return 'AI Fitness Pose Detection';
-    } else if (location.pathname.startsWith('/pose/') && currentPose) {
+    if (location.pathname === "/") {
+      return "FitMirror";
+    } else if (location.pathname === "/actionlist") {
+      return "FitMirror"; // add title for ActionListPage
+    } else if (location.pathname.startsWith("/pose/") && currentPose) {
       return currentPose.name;
-    } else if (location.pathname.startsWith('/camera') && currentPose) {
+    } else if (location.pathname.startsWith("/camera") && currentPose) {
       return `Camera: ${currentPose.name}`;
     } else {
-      return 'AI Fitness';
+      return "AI Fitness";
     }
   };
-  
+
+  // check show return button or not
+  const shouldShowBackButton = () => {
+    // welcome page doesn't show return button
+    if (location.pathname === "/") return false;
+
+    // ActionListPage is the main page, does not show return button
+    if (location.pathname === "/actionlist") return false;
+
+    return true;
+  };
+
+  // return button's target path
+  const getBackPath = () => {
+    if (location.pathname.startsWith("/camera") && currentPose) {
+      return `/pose/${currentPose?.id}`;
+    }
+    return "/actionlist"; //
+  };
+
+  // check show main page button or not
+  const shouldShowHomeButton = () => {
+    // if on the ActionList or welcome page, does not need to show
+    return location.pathname !== "/" && location.pathname !== "/actionlist";
+  };
+
   return (
-    <AppBar position="static">
+    <AppBar
+      position="static"
+      sx={{
+        backgroundColor: "#000",
+        paddingY: 1,
+        width: "100%",
+        zIndex: 10,
+      }}
+    >
       <Container maxWidth="lg">
-        <Toolbar disableGutters>
-          <Box display="flex" alignItems="center" flexGrow={1}>
-            {location.pathname !== '/' && (
+        <Toolbar
+          disableGutters
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          {/* left - main title + subtitle */}
+          <Box display="flex" alignItems="center">
+            {shouldShowBackButton() && (
               <IconButton
                 component={Link}
-                to={location.pathname.startsWith('/camera') ? `/pose/${currentPose?.id}` : '/'}
+                to={getBackPath()}
                 color="inherit"
                 edge="start"
-                sx={{ mr: 2 }}
+                sx={{ mr: 2, padding: "8px" }}
               >
-                <ArrowBack />
+                <ArrowBack fontSize="large" />
               </IconButton>
             )}
-            
-            <Typography variant="h6" component="h1" fontWeight="bold">
-              {getHeaderTitle()}
-            </Typography>
+
+            {/* title + subtitle */}
+            <Box display="flex" alignItems="center">
+              <Typography
+                variant="h6"
+                fontWeight="bold"
+                sx={{ letterSpacing: "1px", color: "#FFF" }}
+              >
+                {getHeaderTitle()}
+              </Typography>
+
+              {/* subtitle  */}
+              {(location.pathname === "/" ||
+                location.pathname === "/actionlist") && (
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: "rgba(255,255,255,0.7)",
+                    fontWeight: "normal",
+                    marginLeft: "10px",
+                  }}
+                >
+                  Your personal AI-powered fitness coach
+                </Typography>
+              )}
+            </Box>
           </Box>
-          
-          {location.pathname !== '/' && (
+
+          {/* right side - homepage button */}
+          {shouldShowHomeButton() && (
             <IconButton
               component={Link}
-              to="/"
+              to="/actionlist"
               color="inherit"
               edge="end"
+              sx={{ padding: "8px" }}
             >
-              <Home />
+              <Home fontSize="large" />
             </IconButton>
           )}
         </Toolbar>
