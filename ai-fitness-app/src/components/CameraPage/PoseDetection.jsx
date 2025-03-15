@@ -79,7 +79,7 @@ const PoseDetection = () => {
     <div className="relative">
       {/* Video Feed */}
       {showVideo && (
-        <div className="relative w-full max-w-4xl mx-auto">
+        <div className="relative w-full mx-auto">
           <img
             src="http://localhost:8000/video_feed"
             alt="Video Feed"
