@@ -7,16 +7,14 @@ eventlet.monkey_patch()
 from flask import Flask, Response
 from flask_socketio import SocketIO
 import cv2
-import mediapipe as mp
+import qai_hub
+import qai_hub_models.models.mediapipe_pose as mp_pose
 
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-# Initialize MediaPipe Pose
-mp_pose = mp.solutions.pose
-pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5, min_tracking_confidence=0.5)
-mp_drawing = mp.solutions.drawing_utils
-
+# Initialize MediaPipe Model
+model = qai_hub.get_model('mediapipe_pose')
 
 def generate_frames():
     cap = cv2.VideoCapture(0)
@@ -31,19 +29,21 @@ def generate_frames():
         if not ret:
             break
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = pose.process(rgb_frame)
+        results = model.process(rgb_frame)
         if results.pose_landmarks:
             landmarks = results.pose_landmarks.landmark
-            hip = [landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].x, landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].y]
-            knee = [landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value].x,
-                    landmarks[mp_pose.PoseLandmark.LEFT_KNEE.value].y]
-            ankle = [landmarks[mp_pose.PoseLandmark.LEFT_ANKLE.value].x,
-                     landmarks[mp_pose.PoseLandmark.LEFT_ANKLE.value].y]
-            shoulder = [landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,
-                        landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y]
+            hip = [landmarks[23].x, landmarks[23].y]  # LEFT_HIP
+            knee = [landmarks[25].x, landmarks[25].y]  # LEFT_KNEE
+            ankle = [landmarks[27].x, landmarks[27].y]  # LEFT_ANKLE
+            shoulder = [landmarks[11].x, landmarks[11].y]   # LEFT_SHOULDER
             knee_angle = calculate_angle(hip, knee, ankle)
             hip_angle = calculate_angle(knee, hip, shoulder)
-            mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+            # mp_drawing.draw_landmarks(frame, results.pose_landmarks, model.POSE_CONNECTIONS)
+            if results.pose_landmarks:
+                for landmark in results.pose_landmarks:
+                    x = int(landmark.x * frame.shape[1])
+                    y = int(landmark.y * frame.shape[0])
+                    cv2.circle(frame, (x, y), 5, (0, 255, 0), -1)
             cv2.putText(frame, f'Knee Angle: {int(knee_angle)} degrees', (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
             cv2.putText(frame, f'Hip Angle: {int(hip_angle)} degrees', (10, 60),
