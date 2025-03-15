@@ -90,7 +90,7 @@ const Header = () => {
             {/* title + subtitle */}
             <Box display="flex" alignItems="center">
               <Typography
-                variant="h6"
+                variant="h5"
                 fontWeight="bold"
                 sx={{ letterSpacing: "1px", color: "#FFF" }}
               >
@@ -101,7 +101,7 @@ const Header = () => {
               {(location.pathname === "/" ||
                 location.pathname === "/actionlist") && (
                 <Typography
-                  variant="h6"
+                  variant="h5"
                   sx={{
                     color: "rgba(255,255,255,0.7)",
                     fontWeight: "normal",
