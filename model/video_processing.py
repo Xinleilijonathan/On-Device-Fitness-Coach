@@ -3,7 +3,7 @@ from utils.math_utils import calculate_angle
 import eventlet
 eventlet.monkey_patch()
 
-from flask import Flask, Response, request
+from flask import Flask, Response
 from flask_socketio import SocketIO
 from flask_cors import CORS
 import cv2
