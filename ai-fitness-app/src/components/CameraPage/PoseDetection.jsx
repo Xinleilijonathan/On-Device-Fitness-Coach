@@ -1,156 +1,192 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Box, Typography, Paper } from '@mui/material';
+import io from 'socket.io-client';
 import { useAppContext } from '../../context/AppContext';
-import apiService from '../../services/api';
-import { useSpring, animated } from '@react-spring/web';
 
-// Define pose connections for visualization
-const POSE_CONNECTIONS = [
-  // Face
-  ['nose', 'left_eye'],
-  ['nose', 'right_eye'],
-  ['left_eye', 'left_ear'],
-  ['right_eye', 'right_ear'],
-  // Upper body
-  ['left_shoulder', 'right_shoulder'],
-  ['left_shoulder', 'left_elbow'],
-  ['right_shoulder', 'right_elbow'],
-  ['left_elbow', 'left_wrist'],
-  ['right_elbow', 'right_wrist'],
-  // Torso
-  ['left_shoulder', 'left_hip'],
-  ['right_shoulder', 'right_hip'],
-  ['left_hip', 'right_hip'],
-  // Lower body
-  ['left_hip', 'left_knee'],
-  ['right_hip', 'right_knee'],
-  ['left_knee', 'left_ankle'],
-  ['right_knee', 'right_ankle']
-];
-
-const PoseDetection = () => {
-  const { 
-    isCameraOn,
-    currentPose,
-    updatePoseData
-  } = useAppContext();
-  
-  const svgRef = useRef(null);
-  const frameRef = useRef(null);
-  
-  const svgSpring = useSpring({
-    opacity: 1, // Always show the visualization
-    config: { tension: 280, friction: 20 }
+const PoseDetection = ({ isProjectorOn }) => {
+  const [alert, setAlert] = useState('');
+  const [showVideo, setShowVideo] = useState(true);
+  const [connectionStatus, setConnectionStatus] = useState('Connecting...');
+  const [exerciseMetrics, setExerciseMetrics] = useState({
+    kneeAngle: 0,
+    hipAngle: 0,
+    squatCount: 0,
+    currentFeedback: '',
   });
+  const { currentPose } = useAppContext();
 
-  // Process video frame and detect pose
-  const processFrame = async (videoElement, canvasElement) => {
-    if (!videoElement || !canvasElement) return;
-
-    const ctx = canvasElement.getContext('2d');
-    ctx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-    
-    try {
-      // For testing: Use mock data
-      const poseData = apiService.mockDetectPose();
-      updatePoseData(poseData);
-      
-      // When ready for production, uncomment this:
-      // const imageData = canvasElement.toDataURL('image/jpeg', 0.8);
-      // const poseData = await apiService.detectPose(imageData);
-      // updatePoseData(poseData);
-    } catch (error) {
-      console.error('Error processing frame:', error);
-    }
-  };
-
-  // Set up continuous frame processing
   useEffect(() => {
-    const runPoseDetection = () => {
-      const videoElement = document.querySelector('video');
-      const canvasElement = document.querySelector('canvas');
-      
-      if (videoElement && canvasElement) {
-        processFrame(videoElement, canvasElement);
+    // Initialize socket connection
+    const socket = io('http://localhost:5000', {
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      autoConnect: true,
+      cors: {
+        origin: '*',
+        methods: ['GET', 'POST']
       }
+    });
+
+    // Connection status handlers
+    socket.on('connect', () => {
+      console.log('Connected to WebSocket');
+      setConnectionStatus('Connected');
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+      setConnectionStatus('Connection error: ' + error.message);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Disconnected from WebSocket');
+      setConnectionStatus('Disconnected');
+    });
+
+    socket.on('exercise_metrics', (data) => {
+      console.log('Received metrics:', data);
+      setExerciseMetrics(prev => ({
+        ...prev,
+        kneeAngle: data.kneeAngle,
+        hipAngle: data.hipAngle,
+        squatCount: data.squatCount
+      }));
+    });
+
+    // Listen for posture alerts
+    socket.on('posture_alert', (data) => {
+      console.log('Received alert:', data);
+      setAlert(data.message);
+      setExerciseMetrics(prev => ({
+        ...prev,
+        currentFeedback: data.message
+      }));
       
-      frameRef.current = requestAnimationFrame(runPoseDetection);
-    };
+      // Hide the alert after 5 seconds
+      setTimeout(() => {
+        setAlert('');
+      }, 5000);
+    });
 
-    // Start with mock data immediately
-    const mockData = apiService.mockDetectPose();
-    updatePoseData(mockData);
+    // Connect to the server
+    socket.connect();
 
-    if (isCameraOn) {
-      frameRef.current = requestAnimationFrame(runPoseDetection);
-    }
-
+    // Cleanup on unmount
     return () => {
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-      }
+      socket.off('exercise_metrics');
+      socket.off('posture_alert');
+      socket.off('connect');
+      socket.off('connect_error');
+      socket.off('disconnect');
+      socket.disconnect();
     };
-  }, [isCameraOn]);
-
-  // Render pose visualization
-  useEffect(() => {
-    if (!svgRef.current) return;
-
-    const svg = svgRef.current;
-    const poseData = currentPose?.poseData || apiService.mockDetectPose();
-
-    if (!poseData?.keypoints) return;
-
-    // Clear previous drawings
-    while (svg.firstChild) {
-      svg.removeChild(svg.firstChild);
-    }
-
-    const svgWidth = svg.clientWidth;
-    const svgHeight = svg.clientHeight;
-
-    // Draw connections
-    POSE_CONNECTIONS.forEach(([start, end]) => {
-      const startPoint = poseData.keypoints.find(kp => kp.id === start);
-      const endPoint = poseData.keypoints.find(kp => kp.id === end);
-
-      if (startPoint && endPoint) {
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', startPoint.x * svgWidth);
-        line.setAttribute('y1', startPoint.y * svgHeight);
-        line.setAttribute('x2', endPoint.x * svgWidth);
-        line.setAttribute('y2', endPoint.y * svgHeight);
-        line.setAttribute('stroke', '#3B82F6');
-        line.setAttribute('stroke-width', '2');
-        svg.appendChild(line);
-      }
-    });
-
-    // Draw keypoints
-    poseData.keypoints.forEach(point => {
-      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      circle.setAttribute('cx', point.x * svgWidth);
-      circle.setAttribute('cy', point.y * svgHeight);
-      circle.setAttribute('r', '4');
-      circle.setAttribute('fill', '#3B82F6');
-      circle.setAttribute('stroke', 'white');
-      circle.setAttribute('stroke-width', '2');
-      svg.appendChild(circle);
-    });
-  }, [currentPose]);
+  }, []);
 
   return (
-    <animated.svg
-      ref={svgRef}
-      style={{
-        ...svgSpring,
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        pointerEvents: 'none'
-      }}
-    />
+    <div className="relative">
+      {/* Comprehensive Feedback Display */}
+      <Paper
+        elevation={3}
+        sx={{
+          position: 'absolute',
+          top: 16,
+          left: 16,
+          bgcolor: 'rgba(0, 0, 0, 0.8)',
+          color: 'white',
+          p: 2,
+          borderRadius: 2,
+          zIndex: 10,
+          minWidth: '250px'
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 1, color: '#4CAF50' }}>
+          {currentPose?.name || 'Squat'} Exercise
+        </Typography>
+        
+        <Typography variant="body1" sx={{ mb: 0.5 }}>
+          Knee Angle: {exerciseMetrics.kneeAngle}°
+        </Typography>
+        
+        <Typography variant="body1" sx={{ mb: 0.5 }}>
+          Hip Angle: {exerciseMetrics.hipAngle}°
+        </Typography>
+        
+        <Typography variant="h6" sx={{ mt: 1, color: '#4CAF50' }}>
+          Count: {exerciseMetrics.squatCount}
+        </Typography>
+        
+        {exerciseMetrics.currentFeedback && (
+          <Typography 
+            variant="body1" 
+            sx={{ 
+              mt: 1, 
+              color: exerciseMetrics.currentFeedback.includes('Good') ? '#4CAF50' : '#ff9800',
+              fontWeight: 'bold'
+            }}
+          >
+            Feedback: {exerciseMetrics.currentFeedback}
+          </Typography>
+        )}
+      </Paper>
+
+      {/* Connection Status */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          bgcolor: connectionStatus.includes('error') ? 'rgba(220, 53, 69, 0.7)' : 'rgba(0, 0, 0, 0.7)',
+          color: 'white',
+          p: 2,
+          borderRadius: 2,
+          zIndex: 10
+        }}
+      >
+        <Typography variant="body2">
+          Status: {connectionStatus}
+        </Typography>
+      </Box>
+
+      {/* Video Feed (includes pose landmarks drawn by backend) */}
+      {showVideo && (
+        <div className="relative w-full max-w-4xl mx-auto">
+          <img
+            src="http://localhost:5000/video_feed"
+            alt="Video Feed"
+            className="w-full aspect-video object-contain rounded-lg border-2 border-blue-500"
+            style={{ backgroundColor: 'black' }}
+            onError={(e) => {
+              console.error('Video feed error:', e);
+              e.target.style.backgroundColor = '#ffebee';
+            }}
+          />
+        </div>
+      )}
+
+      {/* Alert Display */}
+      {alert && (
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            bgcolor: 'rgba(248, 215, 218, 0.9)',
+            color: '#721c24',
+            p: 2,
+            borderRadius: 2,
+            maxWidth: '80%',
+            border: '1px solid #f5c6cb',
+            zIndex: 10
+          }}
+        >
+          <Typography>
+            {alert}
+          </Typography>
+        </Box>
+      )}
+    </div>
   );
 };
 
