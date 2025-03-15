@@ -1,7 +1,10 @@
-from utils import calculate_angle
+from utils.math_utils import calculate_angle
 
-from flask import Flask, Response, render_template
-from flask_socketio import SocketIO, emit
+import eventlet
+eventlet.monkey_patch()
+
+from flask import Flask, Response
+from flask_socketio import SocketIO
 import cv2
 import mediapipe as mp
 
