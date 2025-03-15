@@ -5,17 +5,11 @@ import io from 'socket.io-client';
 const PoseDetection = () => {
   const [alert, setAlert] = useState('');
   const [showVideo, setShowVideo] = useState(true);
-  const [exerciseMetrics, setExerciseMetrics] = useState({
-    kneeAngle: 0,
-    hipAngle: 0,
-    squatCount: 0,
-    currentFeedback: ''
-  });
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     // Create socket instance
-    const socket = io('http://localhost:8000', {
+    const socket = io('http://localhost:5000', {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
@@ -38,24 +32,10 @@ const PoseDetection = () => {
       setIsConnected(false);
     });
 
-    // Data handlers
-    socket.on('exercise_metrics', (data) => {
-      console.log('Received metrics:', data);
-      setExerciseMetrics(prev => ({
-        ...prev,
-        kneeAngle: data.kneeAngle,
-        hipAngle: data.hipAngle,
-        squatCount: data.squatCount
-      }));
-    });
 
     socket.on('posture_alert', (data) => {
       console.log('Received alert:', data);
       setAlert(data.message);
-      setExerciseMetrics(prev => ({
-        ...prev,
-        currentFeedback: data.message
-      }));
       setTimeout(() => setAlert(''), 3000);
     });
 
@@ -77,11 +57,25 @@ const PoseDetection = () => {
 
   return (
     <div className="relative">
+      {/* Show the alert if it exists */}
+      {alert && (
+        <div style={{
+          backgroundColor: '#f8d7da',
+          color: '#721c24',
+          padding: '10px',
+          marginBottom: '15px',
+          border: '1px solid #f5c6cb',
+          borderRadius: '5px'
+        }}>
+          {alert}
+        </div>
+      )}
+
       {/* Video Feed */}
       {showVideo && (
         <div className="relative w-full mx-auto">
           <img
-            src="http://localhost:8000/video_feed"
+            src="http://localhost:5000/video_feed"
             alt="Video Feed"
             className="w-full object-contain"
             style={{ backgroundColor: 'black' }}
@@ -105,74 +99,6 @@ const PoseDetection = () => {
       >
         {isConnected ? 'Connected' : 'Disconnected'}
       </Box>
-
-      {/* Real-time Feedback Display */}
-      <Paper
-        elevation={3}
-        sx={{
-          position: 'absolute',
-          top: 16,
-          left: 16,
-          bgcolor: 'rgba(0, 0, 0, 0.8)',
-          color: 'white',
-          p: 2,
-          borderRadius: 2,
-          zIndex: 10,
-          minWidth: '250px'
-        }}
-      >
-        <Typography variant="h6" sx={{ mb: 1, color: '#4CAF50' }}>
-          Real-Time Feedback
-        </Typography>
-        
-        <Typography variant="body1" sx={{ mb: 0.5 }}>
-          Knee Angle: {exerciseMetrics.kneeAngle}°
-        </Typography>
-        
-        <Typography variant="body1" sx={{ mb: 0.5 }}>
-          Hip Angle: {exerciseMetrics.hipAngle}°
-        </Typography>
-        
-        <Typography variant="h6" sx={{ mt: 1, color: '#4CAF50' }}>
-          Count: {exerciseMetrics.squatCount}
-        </Typography>
-        
-        {exerciseMetrics.currentFeedback && (
-          <Typography 
-            variant="body1" 
-            sx={{ 
-              mt: 1, 
-              color: exerciseMetrics.currentFeedback.includes('Good') ? '#4CAF50' : '#ff9800',
-              fontWeight: 'bold'
-            }}
-          >
-            {exerciseMetrics.currentFeedback}
-          </Typography>
-        )}
-      </Paper>
-
-      {/* Alert */}
-      {alert && (
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: 16,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            bgcolor: 'rgba(248, 215, 218, 0.9)',
-            color: '#721c24',
-            p: 2,
-            borderRadius: 2,
-            maxWidth: '80%',
-            border: '1px solid #f5c6cb',
-            zIndex: 10
-          }}
-        >
-          <Typography>
-            {alert}
-          </Typography>
-        </Box>
-      )}
     </div>
   );
 };
