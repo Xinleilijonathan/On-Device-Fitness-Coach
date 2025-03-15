@@ -3,7 +3,7 @@ from utils.math_utils import calculate_angle
 import eventlet
 eventlet.monkey_patch()
 
-from flask import Flask, Response
+from flask import Flask, Response, request
 from flask_socketio import SocketIO
 from flask_cors import CORS
 import cv2
@@ -11,8 +11,29 @@ import mediapipe as mp
 import numpy as np
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:5173"],
+        "allow_headers": ["Content-Type"],
+        "methods": ["GET", "POST", "OPTIONS"]
+    }
+})
+
+socketio = SocketIO(
+    app,
+    cors_allowed_origins=["http://localhost:5173"],
+    async_mode='eventlet',
+    logger=True,
+    engineio_logger=True
+)
+
+# Add OPTIONS handling for all routes
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:5173')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
 # Initialize MediaPipe Pose with more permissive settings
 mp_pose = mp.solutions.pose
@@ -83,10 +104,7 @@ def generate_frames():
     knee_angle_threshold_low = 60
     hip_angle_threshold = 130
 
-    # Set camera resolution higher
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-
+    # Remove resolution settings to use default camera resolution
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
@@ -179,7 +197,9 @@ def generate_frames():
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    response = Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+    return response
 
 @socketio.on('connect')
 def handle_connect():
@@ -191,7 +211,7 @@ def handle_disconnect():
     print('Client disconnected')
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
+    socketio.run(app, host='0.0.0.0', port=8000, debug=True, allow_unsafe_werkzeug=True)
 
 """
 react use e.g.

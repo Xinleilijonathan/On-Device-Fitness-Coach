@@ -1,49 +1,44 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Paper } from '@mui/material';
+import { Paper, Typography, Box } from '@mui/material';
 import io from 'socket.io-client';
-import { useAppContext } from '../../context/AppContext';
 
-const PoseDetection = ({ isProjectorOn }) => {
+const PoseDetection = () => {
   const [alert, setAlert] = useState('');
   const [showVideo, setShowVideo] = useState(true);
-  const [connectionStatus, setConnectionStatus] = useState('Connecting...');
   const [exerciseMetrics, setExerciseMetrics] = useState({
     kneeAngle: 0,
     hipAngle: 0,
     squatCount: 0,
-    currentFeedback: '',
+    currentFeedback: ''
   });
-  const { currentPose } = useAppContext();
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Initialize socket connection
-    const socket = io('http://localhost:5000', {
+    // Create socket instance
+    const socket = io('http://localhost:8000', {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      autoConnect: true,
-      cors: {
-        origin: '*',
-        methods: ['GET', 'POST']
-      }
+      path: '/socket.io'
     });
 
-    // Connection status handlers
+    // Connection handlers
     socket.on('connect', () => {
-      console.log('Connected to WebSocket');
-      setConnectionStatus('Connected');
-    });
-
-    socket.on('connect_error', (error) => {
-      console.error('Connection error:', error);
-      setConnectionStatus('Connection error: ' + error.message);
+      console.log('Connected to WebSocket server');
+      setIsConnected(true);
     });
 
     socket.on('disconnect', () => {
-      console.log('Disconnected from WebSocket');
-      setConnectionStatus('Disconnected');
+      console.log('Disconnected from WebSocket server');
+      setIsConnected(false);
     });
 
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+      setIsConnected(false);
+    });
+
+    // Data handlers
     socket.on('exercise_metrics', (data) => {
       console.log('Received metrics:', data);
       setExerciseMetrics(prev => ({
@@ -54,7 +49,6 @@ const PoseDetection = ({ isProjectorOn }) => {
       }));
     });
 
-    // Listen for posture alerts
     socket.on('posture_alert', (data) => {
       console.log('Received alert:', data);
       setAlert(data.message);
@@ -62,11 +56,7 @@ const PoseDetection = ({ isProjectorOn }) => {
         ...prev,
         currentFeedback: data.message
       }));
-      
-      // Hide the alert after 5 seconds
-      setTimeout(() => {
-        setAlert('');
-      }, 5000);
+      setTimeout(() => setAlert(''), 3000);
     });
 
     // Connect to the server
@@ -74,18 +64,49 @@ const PoseDetection = ({ isProjectorOn }) => {
 
     // Cleanup on unmount
     return () => {
-      socket.off('exercise_metrics');
-      socket.off('posture_alert');
-      socket.off('connect');
-      socket.off('connect_error');
-      socket.off('disconnect');
-      socket.disconnect();
+      if (socket) {
+        socket.off('connect');
+        socket.off('disconnect');
+        socket.off('connect_error');
+        socket.off('exercise_metrics');
+        socket.off('posture_alert');
+        socket.disconnect();
+      }
     };
   }, []);
 
   return (
     <div className="relative">
-      {/* Comprehensive Feedback Display */}
+      {/* Video Feed */}
+      {showVideo && (
+        <div className="relative w-full max-w-4xl mx-auto">
+          <img
+            src="http://localhost:8000/video_feed"
+            alt="Video Feed"
+            className="w-full object-contain"
+            style={{ backgroundColor: 'black' }}
+          />
+        </div>
+      )}
+
+      {/* Connection Status */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          bgcolor: isConnected ? 'rgba(76, 175, 80, 0.8)' : 'rgba(244, 67, 54, 0.8)',
+          color: 'white',
+          p: 1,
+          borderRadius: 1,
+          zIndex: 10,
+          fontSize: '0.8rem'
+        }}
+      >
+        {isConnected ? 'Connected' : 'Disconnected'}
+      </Box>
+
+      {/* Real-time Feedback Display */}
       <Paper
         elevation={3}
         sx={{
@@ -101,7 +122,7 @@ const PoseDetection = ({ isProjectorOn }) => {
         }}
       >
         <Typography variant="h6" sx={{ mb: 1, color: '#4CAF50' }}>
-          {currentPose?.name || 'Squat'} Exercise
+          Real-Time Feedback
         </Typography>
         
         <Typography variant="body1" sx={{ mb: 0.5 }}>
@@ -125,46 +146,12 @@ const PoseDetection = ({ isProjectorOn }) => {
               fontWeight: 'bold'
             }}
           >
-            Feedback: {exerciseMetrics.currentFeedback}
+            {exerciseMetrics.currentFeedback}
           </Typography>
         )}
       </Paper>
 
-      {/* Connection Status */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 16,
-          right: 16,
-          bgcolor: connectionStatus.includes('error') ? 'rgba(220, 53, 69, 0.7)' : 'rgba(0, 0, 0, 0.7)',
-          color: 'white',
-          p: 2,
-          borderRadius: 2,
-          zIndex: 10
-        }}
-      >
-        <Typography variant="body2">
-          Status: {connectionStatus}
-        </Typography>
-      </Box>
-
-      {/* Video Feed (includes pose landmarks drawn by backend) */}
-      {showVideo && (
-        <div className="relative w-full max-w-4xl mx-auto">
-          <img
-            src="http://localhost:5000/video_feed"
-            alt="Video Feed"
-            className="w-full aspect-video object-contain rounded-lg border-2 border-blue-500"
-            style={{ backgroundColor: 'black' }}
-            onError={(e) => {
-              console.error('Video feed error:', e);
-              e.target.style.backgroundColor = '#ffebee';
-            }}
-          />
-        </div>
-      )}
-
-      {/* Alert Display */}
+      {/* Alert */}
       {alert && (
         <Box
           sx={{
