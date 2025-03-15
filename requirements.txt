@@ -1,0 +1,11 @@
+# Core dependencies for pose detection and web server
+mediapipe==0.10.8
+numpy==1.24.4
+opencv-python==4.11.0.86
+Flask==3.0.3
+Flask-SocketIO==5.5.1
+Flask-CORS==4.0.0
+python-socketio==5.12.1
+python-engineio==4.11.2
+eventlet==0.39.1
+absl-py==2.1.0

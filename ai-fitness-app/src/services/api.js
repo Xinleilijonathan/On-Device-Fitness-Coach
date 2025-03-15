@@ -43,9 +43,7 @@ const mockPoseData = {
     'right-knee': 176
   },
   feedback: [
-    'Keep your back straight',
-    'Lower your shoulders slightly',
-    'Maintain balance between left and right sides'
+    
   ]
 };
 
