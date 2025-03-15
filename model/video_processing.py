@@ -39,6 +39,13 @@ def generate_frames():
                 socketio.emit('posture_alert', {'message': 'Your hip is too high!'})
             elif knee_angle < 90:
                 socketio.emit('posture_alert', {'message': 'Your hip is too low!'})
+
+        # Resize the frame
+        height, width, _ = frame.shape
+        new_width = 2560
+        new_height = int(height * new_width / width)
+        frame = cv2.resize(frame, (new_width, new_height))  # Resize to 1280x720 resolution (HD)
+
         ret, buffer = cv2.imencode('.jpg', frame)
         frame = buffer.tobytes()
         yield (b'--frame\r\n'
