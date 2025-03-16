@@ -77,6 +77,7 @@ ptyprocess==0.7.0
 pure_eval==0.2.3
 pyarrow==19.0.1
 pycparser==2.22
+pygame==2.6.1
 Pygments==2.19.1
 pyparsing==3.2.1
 PySocks==1.7.1
@@ -86,8 +87,6 @@ python-socketio==5.12.1
 pyttsx3==2.98
 pytz==2025.1
 PyYAML==6.0.2
-qai-hub==0.25.0
-qai-hub-models==0.25.2
 requests==2.32.3
 requests-toolbelt==1.0.0
 ruamel.yaml==0.18.10
