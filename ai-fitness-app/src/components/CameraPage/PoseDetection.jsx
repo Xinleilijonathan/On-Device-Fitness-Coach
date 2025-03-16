@@ -1,8 +1,6 @@
 // import React, { useEffect, useState } from "react";
 
 // const PoseDetection = () => {
-//   const [alert, setAlert] = useState("");
-
 //   return (
 //     <div className="relative">
 //       {/* Video Feed */}
@@ -31,8 +29,6 @@ const PoseDetection = () => {
   const [error, setError] = useState(null);
   const projectorWindowRef = useRef(null);
 
-  const [alert, setAlert] = useState("");
-  
   const navigate = useNavigate();
   const { id } = useParams();
   const { 
