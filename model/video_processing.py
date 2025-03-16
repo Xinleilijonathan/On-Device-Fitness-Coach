@@ -1,4 +1,5 @@
 from utils.math_utils import calculate_angle
+from model_compile import pose_detector_target_model, pose_landmark_detector_target_model
 
 import eventlet
 
@@ -7,14 +8,15 @@ eventlet.monkey_patch()
 from flask import Flask, Response
 from flask_socketio import SocketIO
 import cv2
-import qai_hub
-import qai_hub_models.models.mediapipe_pose as mp_pose
+import torch
 
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-# Initialize MediaPipe Model
-model = qai_hub.get_model('mediapipe_pose')
+# Use the compiled models for real-time on-device execution
+pose_detector = pose_detector_target_model  # Use compiled model
+pose_landmark_detector = pose_landmark_detector_target_model
+
 
 def generate_frames():
     cap = cv2.VideoCapture(0)
@@ -29,8 +31,12 @@ def generate_frames():
         if not ret:
             break
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = model.process(rgb_frame)
-        if results.pose_landmarks:
+        frame_tensor = torch.tensor(rgb_frame, dtype=torch.float32).unsqueeze(0)
+
+        # Run pose detection using compiled on-device model
+        results = pose_detector(frame_tensor)
+        if "pose_landmarks" in results:
+            landmarks = results["pose_landmarks"]
             landmarks = results.pose_landmarks.landmark
             hip = [landmarks[23].x, landmarks[23].y]  # LEFT_HIP
             knee = [landmarks[25].x, landmarks[25].y]  # LEFT_KNEE
