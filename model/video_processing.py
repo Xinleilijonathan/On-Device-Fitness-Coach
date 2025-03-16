@@ -1,13 +1,21 @@
 from utils.math_utils import calculate_angle
-import eventlet
 
+import eventlet
 eventlet.monkey_patch()
 
-from flask import Flask, Response
+from flask import Flask, Response, render_template, request
+from flask_socketio import SocketIO
 import cv2
 import mediapipe as mp
+import numpy as np
+import time
+import pyttsx3
+import threading
+
+engine = pyttsx3.init()
 
 app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Initialize MediaPipe Pose
 mp_pose = mp.solutions.pose
@@ -16,6 +24,16 @@ mp_drawing = mp.solutions.drawing_utils
 
 # Global variable for latest alert
 latest_alert = ""
+
+def announce_feedback(feedback):
+    def run_speech():
+      engine.say(feedback)
+      engine.runAndWait()
+
+    # Start a new thread for audio playback
+    thread = threading.Thread(target=run_speech)
+    thread.daemon = True  # Daemon thread exits when main program exits
+    thread.start()
 
 def generate_frames():
     global latest_alert
@@ -52,7 +70,8 @@ def generate_frames():
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
             cv2.putText(frame, f'Squat Count: {squat_count}', (10, 90),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
-
+            
+            feedback = None
             # Handle alerts and draw them on the video feed
             if hip_angle < hip_angle_threshold and not squat_in_progress:
                 squat_in_progress = True
@@ -60,6 +79,7 @@ def generate_frames():
                 squat_in_progress = False
                 if not added_count:
                     latest_alert = "Your knees were not bending enough!"
+                    announce_feedback(latest_alert)
                 added_count = False
 
             if squat_in_progress:
@@ -67,8 +87,10 @@ def generate_frames():
                     squat_count += 1
                     added_count = True
                     latest_alert = "Good squat!"
+                    announce_feedback(latest_alert)
                 if knee_angle < knee_angle_threshold_low:
                     latest_alert = "Your squat is too deep!"
+                    announce_feedback(latest_alert)
 
         # Display alert on the video
         if latest_alert:
