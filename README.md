@@ -80,6 +80,7 @@ The app will run at `http://localhost:5173`
 On-Device-Fitness-Coach/
 ├── ai-fitness-app/     # Frontend React application
 └── model/           # Backend model
+└── project13/           # projector support
 ```
 
 ## Features
@@ -87,7 +88,7 @@ On-Device-Fitness-Coach/
 - Exercise library with form guidance
 - Visual skeleton overlay
 - Exercise completion tracking
-- External projector support (coming soon)
+- External projector support
 
 ## Team Members
 Xinlei Li 		li.xinle@northeastern.edu
