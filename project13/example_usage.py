@@ -21,6 +21,7 @@ def main():
         "s3": "s3.PNG",
         "s4": "s4.PNG",
         "s5": "s5.PNG",
+        "11":"11.PNG",
         
 
 
@@ -84,67 +85,67 @@ def main():
     print("[2] Changing base offset & scale")
     requests.post("http://127.0.0.1:5000/api/set_base", json={
         "offset_x_percent": 53,
-        "offset_y_percent": 49,
+        "offset_y_percent": 55,
         "width_percent": 100,
         "height_percent": 100,
-        "scale_percent": 39
+        "scale_percent": 65
     })
     
     print("[1] Switch base image to 'base2'")
     requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "m1"})
 
  
-    time.sleep(1)
+    time.sleep(2)
     
     print("[1] Switch base image to 'base2'")
     requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "m2"})
-    time.sleep(1)   
+    time.sleep(2)   
     
     print("[1] Switch base image to 'base2'")
     requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "m3"})
-    time.sleep(1)   
+    time.sleep(2)   
     
     print("[1] Switch base image to 'base2'")
     requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "m4"})
-    time.sleep(1)   
+    time.sleep(2)   
     
     print("[1] Switch base image to 'base2'")
     requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "m5"})
-    time.sleep(1)   
+    time.sleep(2)   
 
-    print("[1] Switch base image to 'base2'")
-    requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "s1"})
-        # 2) Adjust base offset, scale, etc.
-    print("[2] Changing base offset & scale")
-    requests.post("http://127.0.0.1:5000/api/set_base", json={
-        "offset_x_percent": 53,
-        "offset_y_percent": 49,
-        "width_percent": 100,
-        "height_percent": 100,
-        "scale_percent": 39
-    })
-    time.sleep(0.5)
+    # print("[1] Switch base image to 'base2'")
+    # requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "s1"})
+    #     # 2) Adjust base offset, scale, etc.
+    # print("[2] Changing base offset & scale")
+    # requests.post("http://127.0.0.1:5000/api/set_base", json={
+    #     "offset_x_percent": 53,
+    #     "offset_y_percent": 49,
+    #     "width_percent": 100,
+    #     "height_percent": 100,
+    #     "scale_percent": 39
+    # })
+    # time.sleep(0.5)
     
-    print("[1] Switch base image to 'base2'")
-    requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "s2"})
-    time.sleep(0.5)   
+    # print("[1] Switch base image to 'base2'")
+    # requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "s2"})
+    # time.sleep(0.5)   
     
-    print("[1] Switch base image to 'base2'")
-    requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "s3"})
-    time.sleep(0.5)   
+    # print("[1] Switch base image to 'base2'")
+    # requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "s3"})
+    # time.sleep(0.5)   
     
-    print("[1] Switch base image to 'base2'")
-    requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "s4"})
-    time.sleep(0.5)   
+    # print("[1] Switch base image to 'base2'")
+    # requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "s4"})
+    # time.sleep(0.5)   
     
-    print("[1] Switch base image to 'base2'")
-    requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "s5"})
-    time.sleep(0.5)   
+    # print("[1] Switch base image to 'base2'")
+    # requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "s5"})
+    # time.sleep(0.5)   
 
 
-    # 5) Done demo; shutdown everything
-    print("Done with demonstration. Let's cleanly shut down the server & Pygame.")
-    requests.post("http://127.0.0.1:5000/shutdown")
+    # # 5) Done demo; shutdown everything
+    # print("Done with demonstration. Let's cleanly shut down the server & Pygame.")
+    # requests.post("http://127.0.0.1:5000/shutdown")
 
     # The /shutdown route sets shared_state["running"]=False and calls the internal
     # werkzeug.server.shutdown, so both threads should stop soon.

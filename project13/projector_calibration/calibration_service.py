@@ -70,7 +70,7 @@ def _create_default_state():
     """Create the default dictionary for shared_state."""
     return {
         "running": True,
-        "display_index": 0,
+        "display_index": 1,
         "selected_image": "image1.png",
 
         "offset_x_percent": 50,

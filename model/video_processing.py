@@ -38,7 +38,7 @@ def generate_frames():
     global latest_alert
     cap = cv2.VideoCapture(0)
     squat_count = 0
-    squat_in_progress = False
+    squat_in_progress = False  
     added_count = False
     knee_angle_threshold = 90
     knee_angle_threshold_low = 70
@@ -74,9 +74,9 @@ def generate_frames():
             feedback = None
             # Handle alerts and draw them on the video feed
             if hip_angle > hip_angle_threshold_high:
-                requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "base2"})   # stand
+                requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "m1"})   # stand
             elif knee_angle >= knee_angle_threshold:
-                requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "base2"})   # null
+                requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "base1"})   # null
 
             if hip_angle < hip_angle_threshold and not squat_in_progress:
                 squat_in_progress = True
@@ -85,6 +85,7 @@ def generate_frames():
                 if not added_count:
                     latest_alert = "Your were not bending enough!"
                     announce_feedback(latest_alert)
+                    requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "11"})   # squat more img
                 added_count = False
 
             if squat_in_progress:
@@ -92,7 +93,7 @@ def generate_frames():
                     squat_count += 1
                     added_count = True
 
-                    requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "base2"})   # squat img
+                    requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "m3"})   # squat img
 
                     latest_alert = "Perfect squat!"
                     announce_feedback(latest_alert)
@@ -117,6 +118,7 @@ def generate_frames():
                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
     cap.release()
+    requests.post("http://127.0.0.1:5000/shutdown")
 
 @app.route('/video_feed')
 def video_feed():

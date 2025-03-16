@@ -33,8 +33,8 @@ def run_pygame(shared_state, image_manager):
         second_monitor_h = desktop_sizes[1][1] if len(desktop_sizes) > 1 else 1080
 
         # Hardcode offset. Example: (1920,0) for side-by-side
-        offset_x = 2560
-        offset_y = 0
+        offset_x = 3600
+        offset_y = -100
 
         screen = create_borderless_window_on_monitor(
             w=second_monitor_w,
