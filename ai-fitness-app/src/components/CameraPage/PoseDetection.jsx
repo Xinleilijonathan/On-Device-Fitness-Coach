@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
-import { Box, Card, CardContent, Stack } from '@mui/material';
+import { Box, Card, CardContent, Stack, Typography, CircularProgress } from '@mui/material';
 import { Cast, CastConnected, CheckCircle } from '@mui/icons-material';
 import Button from '../common/Button';
 import { useSpring, animated } from '@react-spring/web';
@@ -10,7 +10,10 @@ import apiService from '../../services/api';
 const AnimatedCard = animated(Card);
 
 const PoseDetection = () => {
-  const [showVideo, setShowVideo] = useState(true); 
+  const [showVideo, setShowVideo] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const projectorWindowRef = useRef(null);
   
   const navigate = useNavigate();
   const { id } = useParams();
@@ -25,19 +28,76 @@ const PoseDetection = () => {
     config: { tension: 280, friction: 20 }
   });
   
+  // Clean up projector on component unmount
+  useEffect(() => {
+    return () => {
+      if (isProjectorOn && projectorWindowRef.current) {
+        // Try to close the projector window if it's still open
+        try {
+          projectorWindowRef.current.close();
+        } catch (err) {
+          console.error('Error closing projector window:', err);
+        }
+        projectorWindowRef.current = null;
+      }
+    };
+  }, [isProjectorOn]);
+  
   // Handle projector toggle
   const handleProjectorToggle = async () => {
     try {
-      // Call the API to control the external projector
-      await apiService.toggleProjector(!isProjectorOn);
+      setIsLoading(true);
+      setError(null);
+      
+      if (!isProjectorOn) {
+        // Start the projector by opening a new window
+        const result = await apiService.startProjector();
+        if (result.success) {
+          // Store the reference to the opened window
+          projectorWindowRef.current = window.open('http://127.0.0.1:5000', '_blank');
+          
+          // Check if the window was blocked by a popup blocker
+          if (!projectorWindowRef.current || projectorWindowRef.current.closed || typeof projectorWindowRef.current.closed === 'undefined') {
+            setError('Popup blocked! Please allow popups for this site to use the projector.');
+            return;
+          }
+        }
+      } else {
+        // Stop the projector
+        if (projectorWindowRef.current) {
+          try {
+            projectorWindowRef.current.close();
+          } catch (err) {
+            console.error('Error closing projector window:', err);
+          }
+          projectorWindowRef.current = null;
+        }
+        await apiService.stopProjector();
+      }
+      
       // Update the UI state
       toggleProjector();
     } catch (error) {
       console.error('Error toggling projector:', error);
+      setError('Failed to toggle projector. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleCompleteExercise = () => {
+    // If projector is on, close the window before navigating
+    if (isProjectorOn && projectorWindowRef.current) {
+      try {
+        projectorWindowRef.current.close();
+      } catch (err) {
+        console.error('Error closing projector window:', err);
+      }
+      projectorWindowRef.current = null;
+      apiService.shutdownProjector().catch(err => {
+        console.error('Error shutting down projector:', err);
+      });
+    }
     navigate(`/completion/${id}`);
   };
   
@@ -51,6 +111,7 @@ const PoseDetection = () => {
               variant="primary"
               icon={<CheckCircle />}
               sx={{ bgcolor: 'success.main', '&:hover': { bgcolor: 'success.dark' } }}
+              disabled={isLoading}
             >
               Complete Exercise
             </Button>
@@ -58,11 +119,33 @@ const PoseDetection = () => {
             <Button
               onClick={handleProjectorToggle}
               variant={isProjectorOn ? 'secondary' : 'outline'}
-              icon={isProjectorOn ? <CastConnected /> : <Cast />}
+              icon={isLoading ? <CircularProgress size={24} color="inherit" /> : (isProjectorOn ? <CastConnected /> : <Cast />)}
+              disabled={isLoading}
             >
-              {isProjectorOn ? 'Turn Off Projector' : 'Turn On Projector'}
+              {isLoading 
+                ? 'Processing...' 
+                : (isProjectorOn ? 'Turn Off Projector' : 'Turn On Projector')}
             </Button>
           </Stack>
+          
+          {error && (
+            <Typography 
+              color="error" 
+              variant="body2" 
+              sx={{ mt: 1, textAlign: 'center' }}
+            >
+              {error}
+            </Typography>
+          )}
+          
+          {isProjectorOn && (
+            <Typography 
+              variant="body2" 
+              sx={{ mt: 1, textAlign: 'center', color: 'success.main' }}
+            >
+              Projector is active in a separate window. If you don't see it, check your popup blocker.
+            </Typography>
+          )}
         </CardContent>
         
         {/* Video Feed */}
@@ -81,7 +164,7 @@ const PoseDetection = () => {
               }}
             >
               <img
-                src="http://localhost:5000/video_feed"
+                src="/video_feed"
                 alt="Video Feed"
                 style={{
                   width: '100%',
@@ -98,109 +181,3 @@ const PoseDetection = () => {
 };
 
 export default PoseDetection;
-// import React, { useEffect, useState } from 'react';
-// import { Paper, Typography, Box } from '@mui/material';
-// import io from 'socket.io-client';
-
-// const PoseDetection = () => {
-//   const [alert, setAlert] = useState('');
-//   const [showVideo, setShowVideo] = useState(true);
-//   const [isConnected, setIsConnected] = useState(false);
-
-//   useEffect(() => {
-//     // Create socket instance
-//     const socket = io('http://localhost:5000', {
-//       transports: ['websocket', 'polling'],
-//       reconnectionAttempts: 5,
-//       reconnectionDelay: 1000,
-//       path: '/socket.io'
-//     });
-
-//     // Connection handlers
-//     socket.on('connect', () => {
-//       console.log('Connected to WebSocket server');
-//       setIsConnected(true);
-//     });
-
-//     socket.on('disconnect', () => {
-//       console.log('Disconnected from WebSocket server');
-//       setIsConnected(false);
-//     });
-
-//     socket.on('connect_error', (error) => {
-//       console.error('Socket connection error:', error);
-//       setIsConnected(false);
-//     });
-
-
-//     socket.on('posture_alert', (data) => {
-//       console.log('Received alert:', data);
-//       setAlert(data.message);
-//       setTimeout(() => setAlert(''), 3000);
-//     });
-
-//     // Connect to the server
-//     socket.connect();
-
-//     // Cleanup on unmount
-//     return () => {
-//       if (socket) {
-//         socket.off('connect');
-//         socket.off('disconnect');
-//         socket.off('connect_error');
-//         socket.off('exercise_metrics');
-//         socket.off('posture_alert');
-//         socket.disconnect();
-//       }
-//     };
-//   }, []);
-
-//   return (
-//     <div className="relative">
-//       {/* Show the alert if it exists */}
-//       {alert && (
-//         <div style={{
-//           backgroundColor: '#f8d7da',
-//           color: '#721c24',
-//           padding: '10px',
-//           marginBottom: '15px',
-//           border: '1px solid #f5c6cb',
-//           borderRadius: '5px'
-//         }}>
-//           {alert}
-//         </div>
-//       )}
-
-//       {/* Video Feed */}
-//       {showVideo && (
-//         <div className="relative w-full mx-auto">
-//           <img
-//             src="http://localhost:5000/video_feed"
-//             alt="Video Feed"
-//             className="w-full object-contain"
-//             style={{ backgroundColor: 'black' }}
-//           />
-//         </div>
-//       )}
-
-//       {/* Connection Status */}
-//       <Box
-//         sx={{
-//           position: 'absolute',
-//           top: 16,
-//           right: 16,
-//           bgcolor: isConnected ? 'rgba(76, 175, 80, 0.8)' : 'rgba(244, 67, 54, 0.8)',
-//           color: 'white',
-//           p: 1,
-//           borderRadius: 1,
-//           zIndex: 10,
-//           fontSize: '0.8rem'
-//         }}
-//       >
-//         {isConnected ? 'Connected' : 'Disconnected'}
-//       </Box>
-//     </div>
-//   );
-// };
-
-// export default PoseDetection;
