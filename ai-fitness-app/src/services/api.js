@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Configuration
-const API_BASE_URL = 'http://localhost:5000/api'; // Replace with your backend API URL
+const API_BASE_URL = '/api'; // Use relative URL for proxy to handle CORS
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
@@ -49,15 +49,76 @@ const mockPoseData = {
 
 // API service functions
 const apiService = {
-  // Control external projector
-  toggleProjector: async (isOn) => {
+  // Check projector status
+  getProjectorStatus: async () => {
     try {
-      const response = await apiClient.post('/projector/control', {
-        action: isOn ? 'ON' : 'OFF'
-      });
+      const response = await apiClient.get('/status');
       return response.data;
     } catch (error) {
-      console.error('Error controlling projector:', error);
+      console.error('Error getting projector status:', error);
+      throw error;
+    }
+  },
+
+  // Start the projector calibration service
+  startProjector: async () => {
+    try {
+      // Open the projector in a new window
+      window.open('http://127.0.0.1:5000', '_blank');
+      return { success: true };
+    } catch (error) {
+      console.error('Error starting projector:', error);
+      throw error;
+    }
+  },
+  
+  // Stop the projector calibration service
+  stopProjector: async () => {
+    try {
+      // For stopping, we'll try to use the shutdown endpoint
+      const response = await axios.get('/shutdown');
+      return { success: true };
+    } catch (error) {
+      console.error('Error stopping projector:', error);
+      // Even if there's an error, we'll return success since the window might have been closed manually
+      return { success: true };
+    }
+  },
+  
+  // Shutdown the projector service completely
+  shutdownProjector: async () => {
+    try {
+      // The shutdown endpoint is at the root level
+      const response = await axios.get('/shutdown');
+      return { success: true };
+    } catch (error) {
+      console.error('Error shutting down projector:', error);
+      // Even if there's an error, we'll return success since the window might have been closed manually
+      return { success: true };
+    }
+  },
+  
+  // Adjust projector overlay settings
+  adjustProjectorOverlay: async (settings) => {
+    try {
+      const response = await apiClient.post('/set_overlay', {
+        overlay_enabled: true,
+        ...settings
+      });
+      return { success: true };
+    } catch (error) {
+      console.error('Error adjusting projector overlay:', error);
+      throw error;
+    }
+  },
+  
+  // Adjust projector base image settings
+  adjustProjectorBase: async (settings) => {
+    try {
+      const response = await apiClient.post('/api/set_base', settings);
+      return { success: true };
+    } catch (error) {
+      console.error('Error adjusting projector base:', error);
       throw error;
     }
   },
