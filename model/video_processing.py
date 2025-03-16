@@ -3,12 +3,10 @@ from utils.math_utils import calculate_angle
 import eventlet
 eventlet.monkey_patch()
 
-from flask import Flask, Response, render_template, request
+from flask import Flask, Response
 from flask_socketio import SocketIO
 import cv2
 import mediapipe as mp
-import numpy as np
-import time
 import pyttsx3
 import threading
 
@@ -23,7 +21,7 @@ pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5, min_t
 mp_drawing = mp.solutions.drawing_utils
 
 # Global variable for latest alert
-latest_alert = ""
+latest_alert = None
 
 def announce_feedback(feedback):
     def run_speech():
@@ -42,7 +40,7 @@ def generate_frames():
     squat_in_progress = False
     added_count = False
     knee_angle_threshold = 90
-    knee_angle_threshold_low = 60
+    knee_angle_threshold_low = 70
     hip_angle_threshold = 130
 
     while cap.isOpened():
@@ -78,7 +76,7 @@ def generate_frames():
             elif hip_angle >= hip_angle_threshold and squat_in_progress:
                 squat_in_progress = False
                 if not added_count:
-                    latest_alert = "Your knees were not bending enough!"
+                    latest_alert = "Your were not bending enough!"
                     announce_feedback(latest_alert)
                 added_count = False
 
@@ -86,9 +84,10 @@ def generate_frames():
                 if knee_angle < knee_angle_threshold and not added_count:
                     squat_count += 1
                     added_count = True
-                    latest_alert = "Good squat!"
-                    announce_feedback(latest_alert)
-                if knee_angle < knee_angle_threshold_low:
+                    if latest_alert != "Perfect squat!":
+                        latest_alert = "Perfect squat!"
+                        announce_feedback(latest_alert)
+                elif knee_angle < knee_angle_threshold_low and latest_alert != "Your squat is too deep!":
                     latest_alert = "Your squat is too deep!"
                     announce_feedback(latest_alert)
 
