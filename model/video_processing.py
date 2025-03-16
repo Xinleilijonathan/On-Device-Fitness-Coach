@@ -77,7 +77,7 @@ def generate_frames():
                 requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "base2"})   # stand
             elif knee_angle >= knee_angle_threshold:
                 requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "base2"})   # null
-                
+
             if hip_angle < hip_angle_threshold and not squat_in_progress:
                 squat_in_progress = True
             elif hip_angle >= hip_angle_threshold and squat_in_progress:
