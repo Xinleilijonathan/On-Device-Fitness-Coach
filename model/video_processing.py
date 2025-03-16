@@ -9,6 +9,7 @@ import cv2
 import mediapipe as mp
 import pyttsx3
 import threading
+import requests
 
 engine = pyttsx3.init()
 
@@ -42,6 +43,7 @@ def generate_frames():
     knee_angle_threshold = 90
     knee_angle_threshold_low = 70
     hip_angle_threshold = 130
+    hip_angle_threshold_high = 170
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -71,6 +73,11 @@ def generate_frames():
             
             feedback = None
             # Handle alerts and draw them on the video feed
+            if hip_angle > hip_angle_threshold_high:
+                requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "base2"})   # stand
+            elif knee_angle >= knee_angle_threshold:
+                requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "base2"})   # null
+                
             if hip_angle < hip_angle_threshold and not squat_in_progress:
                 squat_in_progress = True
             elif hip_angle >= hip_angle_threshold and squat_in_progress:
@@ -84,9 +91,11 @@ def generate_frames():
                 if knee_angle < knee_angle_threshold and not added_count:
                     squat_count += 1
                     added_count = True
-                    if latest_alert != "Perfect squat!":
-                        latest_alert = "Perfect squat!"
-                        announce_feedback(latest_alert)
+
+                    requests.post("http://127.0.0.1:5000/api/set_image", json={"image": "base2"})   # squat img
+
+                    latest_alert = "Perfect squat!"
+                    announce_feedback(latest_alert)
                 elif knee_angle < knee_angle_threshold_low and latest_alert != "Your squat is too deep!":
                     latest_alert = "Your squat is too deep!"
                     announce_feedback(latest_alert)
