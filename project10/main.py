@@ -22,11 +22,11 @@ def main():
         "selected_image": "image1.png",
 
         # Base image transforms
-        "offset_x_percent": 50,
+        "offset_x_percent": 53,
         "offset_y_percent": 50,
         "width_percent": 100,
         "height_percent": 100,
-        "scale_percent": 100,
+        "scale_percent": 39,
 
         # Overlay usage
         "overlay_enabled": False,
@@ -44,6 +44,8 @@ def main():
     image_manager = ImageManager()
     # Load images for the base
     image_manager.load_image("image1.png", "image1.png")
+    image_manager.load_image("image2.png", "image2.png")
+    image_manager.load_image("image2.png", "image2.png")
     image_manager.load_image("image2.png", "image2.png")
     # Load overlay images
     image_manager.load_image("overlay1.png", "overlay1.png")
