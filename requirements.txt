@@ -1,4 +1,3 @@
-action-tutorials-py==0.14.4
 aenum==3.1.0
 alabaster==0.7.11
 ament-cmake-test==1.1.6
@@ -35,27 +34,21 @@ blaze==0.11.3
 bleach==2.1.4
 bokeh==0.13.0
 boto==2.49.0
-boto3 @ file:///tmp/build/80754af9/boto3_1623678999017/work
-botocore @ file:///tmp/build/80754af9/botocore_1623784183042/work
 Bottleneck==1.2.1
 brotlipy==0.7.0
 bz2file==0.98
 catkin-pkg==0.4.23
 certifi==2021.5.30
 cffi==1.14.0
-chardet @ file:///tmp/build/80754af9/chardet_1607706768982/work
 click==6.7
-cloudpickle @ file:///tmp/build/80754af9/cloudpickle_1598884132938/work
 clyent==1.2.2
 colorama==0.3.9
 commonmark==0.9.1
 conda==4.10.3
 conda-build==3.15.1
-conda-package-handling @ file:///tmp/build/80754af9/conda-package-handling_1618262151086/work
 constantly==15.1.0
 contextlib2==0.5.5
 controller-manager==1.6.0
-cryptography @ file:///tmp/build/80754af9/cryptography_1616769182610/work
 cv-bridge==3.1.3
 cycler==0.10.0
 Cython==0.28.5
@@ -88,7 +81,6 @@ Flask==1.0.2
 Flask-Cors==3.0.6
 future==0.18.2
 genpac==2.1.0
-gensim @ file:///tmp/build/80754af9/gensim_1613994459750/work
 gevent==1.3.6
 glob2==0.6
 gmpy2==2.0.8
@@ -99,7 +91,6 @@ h5py==2.8.0
 heapdict==1.0.0
 html5lib==1.0.1
 hyperlink==18.0.0
-idna @ file:///home/linux1/recipes/ci/idna_1610986105248/work
 image-classifiers==1.0.0
 image-geometry==3.1.3
 imageio==2.4.1
@@ -118,8 +109,6 @@ jdcal==1.4
 jedi==0.12.1
 jeepney==0.3.1
 Jinja2==2.10
-jmespath @ file:///tmp/build/80754af9/jmespath_1594304593830/work
-joblib @ file:///tmp/build/80754af9/joblib_1613502643832/work
 joint-state-publisher==2.2.0
 jsonschema==2.6.0
 jupyter==1.0.0
@@ -143,7 +132,6 @@ locket==0.2.0
 lxml==4.2.5
 Markdown==3.3.4
 MarkupSafe==1.0
-matplotlib @ file:///tmp/build/80754af9/matplotlib-base_1592846017414/work
 mccabe==0.6.1
 mistune==0.8.3
 mkl-fft==1.3.0
@@ -163,8 +151,6 @@ nltk==3.3
 nose==1.3.7
 notebook==5.6.0
 numba==0.39.0
-numexpr @ file:///tmp/build/80754af9/numexpr_1614798504508/work
-numpy @ file:///tmp/build/80754af9/numpy_and_numpy_base_1603479632437/work
 numpydoc==0.8.0
 odo==0.5.1
 olefile==0.46
@@ -197,7 +183,6 @@ pyasn1-modules==0.2.2
 pybullet==3.1.7
 pycodestyle==2.4.0
 pycosat==0.6.3
-pycparser @ file:///tmp/build/80754af9/pycparser_1594388511720/work
 pycrypto==2.6.1
 pycurl==7.43.0.5
 pyflakes==2.0.0
@@ -209,7 +194,6 @@ pyOpenSSL==19.0.0
 pyparsing==2.2.0
 pyrealsense2==2.53.1.4623
 pyrvo2==0.0.0
-PySocks @ file:///tmp/build/80754af9/pysocks_1594394576006/work
 pytest==3.8.0
 pytest-arraydiff==0.2
 pytest-astropy==0.4.0
@@ -233,7 +217,6 @@ quality-of-service-demo-py==0.14.4
 rclpy==1.9.3
 rcutils==4.0.4
 recommonmark==0.7.1
-requests @ file:///tmp/build/80754af9/requests_1608241421344/work
 resource-retriever==2.5.0
 rope==0.11.0
 ros2action==0.13.5
@@ -287,11 +270,7 @@ rqt-shell==1.0.2
 rqt-srv==1.0.3
 rqt-top==1.0.2
 rqt-topic==1.4.0
-ruamel-yaml-conda @ file:///tmp/build/80754af9/ruamel_yaml_1616016701961/work
-s3transfer @ file:///tmp/build/80754af9/s3transfer_1623278116614/work
 scikit-image==0.19.2
-scikit-learn @ file:///tmp/build/80754af9/scikit-learn_1621370326158/work
-scipy @ file:///tmp/build/80754af9/scipy_1616700973326/work
 seaborn==0.9.0
 SecretStorage==3.1.0
 segmentation-models==1.0.1
@@ -300,7 +279,6 @@ service-identity==17.0.0
 Shapely==1.8.1.post1
 simplegeneric==0.8.1
 singledispatch==3.4.0.3
-six @ file:///home/linux1/recipes/ci/six_1610970791821/work
 smart-open==1.9.0
 smclib==3.0.1
 snowballstemmer==1.2.1
@@ -309,12 +287,6 @@ sortedcontainers==2.0.5
 Sphinx==4.1.1
 sphinx-markdown-tables==0.0.15
 sphinx-rtd-theme==0.5.2
-sphinxcontrib-applehelp @ file:///home/ktietz/src/ci/sphinxcontrib-applehelp_1611920841464/work
-sphinxcontrib-devhelp @ file:///home/ktietz/src/ci/sphinxcontrib-devhelp_1611920923094/work
-sphinxcontrib-htmlhelp @ file:///tmp/build/80754af9/sphinxcontrib-htmlhelp_1623945626792/work
-sphinxcontrib-jsmath @ file:///home/ktietz/src/ci/sphinxcontrib-jsmath_1611920942228/work
-sphinxcontrib-qthelp @ file:///home/ktietz/src/ci/sphinxcontrib-qthelp_1611921055322/work
-sphinxcontrib-serializinghtml @ file:///tmp/build/80754af9/sphinxcontrib-serializinghtml_1624451540180/work
 sphinxcontrib-websupport==1.1.0
 spyder==3.3.1
 spyder-kernels==0.2.6
@@ -333,7 +305,6 @@ tf2-kdl==0.17.5
 tf2-py==0.17.5
 tf2-ros-py==0.17.5
 tf2-tools==0.17.5
-threadpoolctl @ file:///tmp/tmp9twdgx9k/threadpoolctl-2.1.0-py3-none-any.whl
 tifffile==2021.11.2
 toolz==0.9.0
 topic-monitor==0.14.4
@@ -341,7 +312,6 @@ torch==1.8.1
 torchaudio==0.8.0a0+e4e171a
 torchvision==0.2.2
 tornado==5.1
-tqdm @ file:///tmp/build/80754af9/tqdm_1615925068909/work
 traitlets==4.3.2
 transforms3d==0.3.1
 trimesh==3.9.23
@@ -349,9 +319,7 @@ turtlebot4-diagnostics==0.1.3
 turtlebot4-navigation==0.1.2
 turtlebot4-tests==0.1.3
 Twisted==18.7.0
-typing-extensions @ file:///home/ktietz/src/ci_mi/typing_extensions_1612808209620/work
 unicodecsv==0.14.1
-urllib3 @ file:///tmp/build/80754af9/urllib3_1615837158687/work
 virtualenv==20.10.0
 wcwidth==0.1.7
 webencodings==0.5.1
