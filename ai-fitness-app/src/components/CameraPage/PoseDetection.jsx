@@ -15,6 +15,8 @@ const PoseDetection = () => {
   const [error, setError] = useState(null);
   const projectorWindowRef = useRef(null);
   
+  const [alert, setAlert] = useState("");
+  
   const navigate = useNavigate();
   const { id } = useParams();
   const { 
@@ -149,32 +151,9 @@ const PoseDetection = () => {
         </CardContent>
         
         {/* Video Feed */}
-        {showVideo && (
-          <Box sx={{ position: 'relative', paddingTop: '56.25%', bgcolor: 'black' }}>
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center'
-              }}
-            >
-              <img
-                src="/video_feed"
-                alt="Video Feed"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain'
-                }}
-              />
-            </Box>
-          </Box>
-        )}
+        <div>
+          <img src="http://127.0.0.1:5000/video_feed" alt="Video Feed" /> //keep this one 
+        </div>
       </AnimatedCard>
     </Box>
   );

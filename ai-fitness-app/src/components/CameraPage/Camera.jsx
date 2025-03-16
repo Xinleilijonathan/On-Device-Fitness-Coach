@@ -6,6 +6,7 @@ const Camera = () => {
 };
 
 export default Camera;
+
 // import React, { useEffect } from 'react';
 // import { useNavigate, useParams } from 'react-router-dom';
 // import { useAppContext } from '../../context/AppContext';
@@ -52,7 +53,6 @@ export default Camera;
 //   //     }
 //   //   };
 //   // }, []);
-
 //   // Handle projector toggle
 //   const handleProjectorToggle = async () => {
 //     try {
@@ -62,7 +62,7 @@ export default Camera;
 //       toggleProjector();
 //     } catch (error) {
 //       console.error('Error toggling projector:', error);
-//       // show an error message to the user here
+//       // You might want to show an error message to the user here
 //     }
 //   };
 
@@ -113,9 +113,10 @@ export default Camera;
 //                 bgcolor: 'rgba(0, 0, 0, 0.8)'
 //               }}
 //             >
-//               {/* <Typography variant="h6" color="error">
+//               <Alert severity="error" variant="filled" sx={{ maxWidth: 'md' }}>
+//                 <AlertTitle>Camera Error</AlertTitle>
 //                 {error}
-//               </Typography> */}
+//               </Alert>
 //             </Box>
 //           )}
           
@@ -154,7 +155,7 @@ export default Camera;
 //               <PoseDetection isProjectorOn={isProjectorOn} />
               
 //               {/* Feedback display */}
-//               {/* <FeedbackDisplay />  */}
+//               <FeedbackDisplay />
 //             </>
 //           )}
           
