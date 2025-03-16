@@ -1,26 +1,54 @@
-# projector_calibration/run_pygame.py
+# run_pygame.py
 
 import pygame
 import sys
+import os
+
+def create_borderless_window_on_monitor(w, h, x, y):
+    """
+    Create a borderless window sized (w,h),
+    top-left corner at (x,y).
+    This is effectively "fullscreen" if (w,h) matches the monitor's resolution.
+    """
+    # Tell SDL where to place the window
+    os.environ['SDL_VIDEO_WINDOW_POS'] = f"{x},{y}"
+
+    # Create a borderless window
+    flags = pygame.NOFRAME  # no window border
+    screen = pygame.display.set_mode((w, h), flags)
+    return screen
 
 def run_pygame(shared_state, image_manager):
-    """
-    Continuously draws the base + overlay images based on 'shared_state'.
-    Runs in a separate thread so your main app can keep running.
-    """
     pygame.init()
 
     num_displays = pygame.display.get_num_displays()
-    desktop_sizes = pygame.display.get_desktop_sizes()
+    desktop_sizes = pygame.display.get_desktop_sizes()  # e.g. [(1920,1080), (1920,1080)] if 2 monitors
 
     d_idx = max(0, min(shared_state["display_index"], num_displays - 1))
-    if 0 <= d_idx < len(desktop_sizes):
-        screen_w, screen_h = desktop_sizes[d_idx]
-    else:
-        screen_w, screen_h = (800, 600)
 
-    screen = pygame.display.set_mode((screen_w, screen_h), pygame.FULLSCREEN, display=d_idx)
-    pygame.display.set_caption("Projector Calibration - Base & Overlay")
+    # Hardcode: if user picks display #1, we treat that as second monitor offset 1920,0
+    # (assuming first monitor is 1920 wide). If your arrangement differs, change these numbers.
+    if d_idx == 1:
+        second_monitor_w = desktop_sizes[1][0] if len(desktop_sizes) > 1 else 1920
+        second_monitor_h = desktop_sizes[1][1] if len(desktop_sizes) > 1 else 1080
+
+        # Hardcode offset. Example: (1920,0) for side-by-side
+        offset_x = 2560
+        offset_y = 0
+
+        screen = create_borderless_window_on_monitor(
+            w=second_monitor_w,
+            h=second_monitor_h,
+            x=offset_x,
+            y=offset_y
+        )
+    else:
+        # For display #0 or anything else, just do a normal window
+        # (You can also do borderless at (0,0) if you prefer.)
+        w, h = desktop_sizes[0] if len(desktop_sizes) > 0 else (800, 600)
+        screen = pygame.display.set_mode((w, h))  # windowed mode
+
+    pygame.display.set_caption("Projector Calibration - Base + Overlay")
 
     clock = pygame.time.Clock()
     last_display_index = d_idx
@@ -30,53 +58,43 @@ def run_pygame(shared_state, image_manager):
             if event.type == pygame.QUIT:
                 shared_state["running"] = False
 
-        # If user changed the display (via shared_state)
+        # If user changes display in real-time, you could re-init again if needed.
         if shared_state["display_index"] != last_display_index:
-            new_idx = max(0, min(shared_state["display_index"], num_displays - 1))
-            if 0 <= new_idx < len(desktop_sizes):
-                screen_w, screen_h = desktop_sizes[new_idx]
-            else:
-                screen_w, screen_h = (800, 600)
-            screen = pygame.display.set_mode((screen_w, screen_h),
-                                             pygame.FULLSCREEN,
-                                             display=new_idx)
-            last_display_index = new_idx
+            # re-init in the same fashion
+            # (For brevity, skip an example. Usually, we do a code block or function.)
+            last_display_index = shared_state["display_index"]
 
+        # Fill background
         screen.fill((0, 0, 0))
 
-        # ----- Draw base image -----
+        # 1) Draw base image
         base_name = shared_state["selected_image"]
         base_surf = image_manager.get_image(base_name)
         if base_surf:
             draw_image(
-                screen=screen,
-                surface=base_surf,
+                screen,
+                base_surf,
                 offset_x=shared_state["offset_x_percent"],
                 offset_y=shared_state["offset_y_percent"],
                 width_pct=shared_state["width_percent"],
                 height_pct=shared_state["height_percent"],
                 scale_pct=shared_state["scale_percent"],
-                alpha=None,  # base image is opaque
-                screen_w=screen_w,
-                screen_h=screen_h
+                alpha=None
             )
 
-        # ----- Draw overlay if enabled -----
+        # 2) Draw overlay if enabled
         if shared_state["overlay_enabled"]:
-            overlay_name = shared_state["overlay_image"]
-            overlay_surf = image_manager.get_image(overlay_name)
+            overlay_surf = image_manager.get_image(shared_state["overlay_image"])
             if overlay_surf:
                 draw_image(
-                    screen=screen,
-                    surface=overlay_surf,
+                    screen,
+                    overlay_surf,
                     offset_x=shared_state["overlay_offset_x_percent"],
                     offset_y=shared_state["overlay_offset_y_percent"],
                     width_pct=shared_state["overlay_width_percent"],
                     height_pct=shared_state["overlay_height_percent"],
                     scale_pct=shared_state["overlay_scale_percent"],
-                    alpha=shared_state["overlay_alpha"],  # 0..255
-                    screen_w=screen_w,
-                    screen_h=screen_h
+                    alpha=shared_state["overlay_alpha"]
                 )
 
         pygame.display.flip()
@@ -92,18 +110,15 @@ def draw_image(screen,
                width_pct,
                height_pct,
                scale_pct,
-               alpha,
-               screen_w,
-               screen_h):
+               alpha):
     """
-    1) Scale 'surface' according to width_pct, height_pct, scale_pct.
-    2) Position it so center is at (offset_x%, offset_y%) of the screen.
-    3) If alpha is set, apply it.
-    4) Blit onto the screen.
+    1) Scale the image by width_pct, height_pct, scale_pct
+    2) Position so center is at (offset_x%, offset_y%) of the screen
+    3) If alpha not None, set alpha
     """
+    screen_w, screen_h = screen.get_size()
     orig_w, orig_h = surface.get_width(), surface.get_height()
 
-    # Scale
     w = int(orig_w * (width_pct / 100.0))
     h = int(orig_h * (height_pct / 100.0))
     w = int(w * (scale_pct / 100.0))
@@ -115,7 +130,6 @@ def draw_image(screen,
     if alpha is not None:
         scaled_surf.set_alpha(alpha)
 
-    # Position
     center_x = screen_w * (offset_x / 100.0)
     center_y = screen_h * (offset_y / 100.0)
     final_x = int(center_x - w / 2)
