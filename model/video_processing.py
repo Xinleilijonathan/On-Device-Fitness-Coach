@@ -6,10 +6,8 @@ eventlet.monkey_patch()
 from flask import Flask, Response
 import cv2
 import mediapipe as mp
-from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
 
 # Initialize MediaPipe Pose
 mp_pose = mp.solutions.pose
