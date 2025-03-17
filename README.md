@@ -1,7 +1,7 @@
 # On-Device-Fitness-Coach
 On-device AI hackathon project
 
-# Backend Project Environment Setup
+# Backend Project Setup and Run
 
 This project uses a Python virtual environment to manage dependencies. Below are the steps to set up the environment on your local machine.
 
@@ -52,7 +52,15 @@ pip install -r requirements.txt
 
 This will install all the Python packages listed in the `requirements.txt` file.
 
-## 5. Deactivate the Virtual Environment
+## 5. Run the Backend
+
+When finish envitonment setup, you can run the backend service by:
+
+```bash
+python -m model.video_processing
+```
+
+## 6. Deactivate the Virtual Environment
 
 When you're done working on the project, you can deactivate the virtual environment by running:
 
